@@ -235,10 +235,12 @@ def _wait_and_link_contact_for_user(user, customer_name):
                 return None
                 
         except Exception as e:
-            frappe.log_error(
-                f"Error waiting/linking contact for {user}: {str(e)}",
-                "Contact Wait/Link Error"
-            )
+            # Only log on last attempt after all retries exhausted
+            if attempt >= max_retries - 1:
+                frappe.log_error(
+                    f"Error waiting/linking contact for {user}: {str(e)}",
+                    "Contact Wait/Link Error"
+                )
             if attempt < max_retries - 1:
                 time.sleep(base_delay * (attempt + 1))
                 continue
