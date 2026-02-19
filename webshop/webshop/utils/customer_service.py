@@ -5,7 +5,6 @@ Provides idempotent customer creation with distributed locking to prevent duplic
 
 import frappe
 import time
-import random
 from frappe import _
 from frappe.contacts.doctype.contact.contact import get_contact_name
 from frappe.utils import get_fullname
@@ -88,6 +87,14 @@ def get_customer_for_user(user):
     Returns:
         Customer document or None
     """
+    customer_name = frappe.db.get_value(
+        "Portal User",
+        {"parenttype": "Customer", "user": user},
+        "parent",
+    )
+    if customer_name and frappe.db.exists("Customer", customer_name):
+        return frappe.get_doc("Customer", customer_name)
+
     contact_name = get_contact_name(user)
     if not contact_name:
         return None
@@ -156,9 +163,10 @@ def _create_customer_with_contact(user, cart_settings=None):
             })
 
     customer.flags.ignore_mandatory = True
+    customer.flags.ignore_links = True
     customer.insert(ignore_permissions=True)
 
-    # PASSIVE: Wait for Frappe's contact and link it (never create)
+    # Link only if contact already exists; avoid long waits in login flow
     contact = _wait_and_link_contact_for_user(user, customer.name)
 
     # Set as primary contact if contact was linked
@@ -170,13 +178,13 @@ def _create_customer_with_contact(user, cart_settings=None):
 
 def _wait_and_link_contact_for_user(user, customer_name):
     """
-    PASSIVE: Wait for Frappe's background job to create contact, then link it.
+    Link existing contact to customer with minimal retries.
     NEVER creates contacts - only links existing ones.
     
     Returns Contact document or None if contact not found after max retries.
     """
-    max_retries = 20  # Increased to allow more time for Frappe's background job
-    base_delay = 0.5  # Starting delay in seconds
+    max_retries = 2
+    base_delay = 0.2
     
     for attempt in range(max_retries):
         try:
@@ -198,19 +206,20 @@ def _wait_and_link_contact_for_user(user, customer_name):
                             "link_doctype": "Customer",
                             "link_name": customer_name
                         })
+                        contact.flags.ignore_links = True
                         contact.flags.ignore_mandatory = True
                         contact.save(ignore_permissions=True)
                     
                     return contact
                     
                 except frappe.DoesNotExistError:
-                    # Contact disappeared between check and get, continue waiting
+                    # Contact disappeared between check and get, continue quickly
                     pass
                 except frappe.QueryDeadlockError:
                     # Deadlock on update, retry with backoff
                     frappe.db.rollback()
                     if attempt < max_retries - 1:
-                        time.sleep(base_delay * (2 ** attempt))  # Exponential backoff
+                        time.sleep(base_delay)
                         continue
                     else:
                         frappe.log_error(
@@ -219,18 +228,13 @@ def _wait_and_link_contact_for_user(user, customer_name):
                         )
                         return None
             
-            # Contact doesn't exist yet - WAIT for Frappe's background job
+            # Contact doesn't exist yet - don't block login flow
             if attempt < max_retries - 1:
-                # Exponential backoff with jitter to reduce collision probability
-                delay = base_delay * (2 ** attempt) * (0.8 + 0.4 * random.random())
-                time.sleep(delay)
+                time.sleep(base_delay)
                 continue
             else:
-                # Max retries reached, log but don't create
-                frappe.log_error(
-                    f"Contact not found for {user} after {max_retries} attempts. "
-                    f"Frappe's background job should create it eventually.",
-                    "Contact Wait Timeout"
+                logger.info(
+                    f"Contact not available yet for {user}; customer {customer_name} created without immediate contact link"
                 )
                 return None
                 
