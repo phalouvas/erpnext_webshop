@@ -76,3 +76,7 @@ has_website_permission = {
     "Website Item": "webshop.webshop.doctype.website_item.website_item.has_website_permission_for_website_item",
     "Item Group": "webshop.webshop.doctype.website_item.website_item.has_website_permission_for_item_group"
 }
+
+override_whitelisted_methods = {
+    "erpnext.accounts.doctype.payment_request.payment_request.make_payment_request": "webshop.webshop.api.make_payment_request",
+}
