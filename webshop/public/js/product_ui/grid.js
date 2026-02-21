@@ -66,14 +66,11 @@ webshop.ProductGrid = class {
 		body_html += this.get_title(item, title);
 
 		// get floating elements
-		if (!item.has_variants) {
-			if (settings.enable_wishlist) {
-				body_html += this.get_wishlist_icon(item);
-			}
-			if (settings.enabled) {
-				body_html += this.get_cart_indicator(item);
-			}
-
+		if (!item.has_variants && settings.enable_wishlist) {
+			body_html += this.get_wishlist_icon(item);
+		}
+		if (settings.enabled) {
+			body_html += this.get_cart_indicator(item);
 		}
 
 		body_html += `</div>`;
@@ -116,7 +113,7 @@ webshop.ProductGrid = class {
 	get_cart_indicator(item) {
 		return `
 			<div class="cart-indicator ${item.in_cart ? '' : 'hidden'}" data-item-code="${ item.item_code }">
-				1
+				${ item.cart_qty || 0 }
 			</div>
 		`;
 	}
@@ -163,6 +160,18 @@ webshop.ProductGrid = class {
 
 	get_primary_button(item, settings) {
 		if (item.has_variants) {
+			if (item.in_cart) {
+				return `
+					<a href="/cart">
+						<div class="btn
+							btn-sm btn-primary btn-add-to-cart-list
+							w-100 mt-4 go-to-cart-grid"
+							data-item-code="${ item.item_code }">
+							${ settings.enable_checkout ? __("Go to Cart") :  __("Go to Quote") }
+						</div>
+					</a>
+				`;
+			}
 			return `
 				<a href="/${ item.route || '#' }">
 					<div class="btn btn-sm btn-explore-variants w-100 mt-4">
