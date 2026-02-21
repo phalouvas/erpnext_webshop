@@ -14,6 +14,7 @@ def get_context(context):
 	filter_engine = ProductFiltersBuilder()
 	context.field_filters = filter_engine.get_field_filters()
 	context.attribute_filters = filter_engine.get_attribute_filters()
+	context.has_filters = bool(context.field_filters or context.attribute_filters)
 
 	context.page_length = (
 		cint(frappe.db.get_single_value("Webshop Settings", "products_per_page")) or 20

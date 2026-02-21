@@ -9,6 +9,10 @@
 	>
 		{{ _('Select Variant') }}
 	</button>
+	<a href="/cart" class="btn btn-light btn-view-in-cart-variant hidden mr-2 font-md"
+		role="button">
+		{{  _("View in Cart") if cart_settings.enable_checkout else _("View in Quote") }}
+	</a>
 	{% endif %}
 	{% if cart_settings.show_contact_us_button %}
 		{% include "templates/generators/item/item_inquiry.html" %}

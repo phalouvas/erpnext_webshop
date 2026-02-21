@@ -252,7 +252,10 @@ class ItemConfigure {
 		webshop.webshop.shopping_cart.update_cart({
 			item_code,
 			additional_notes,
-			qty: 1
+			qty: 1,
+			callback: () => {
+				$('.btn-view-in-cart-variant').removeClass('hidden');
+			}
 		});
 		this.dialog.hide();
 	}

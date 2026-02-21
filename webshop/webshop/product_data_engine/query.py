@@ -56,7 +56,7 @@ class ProductQuery:
 		"""
 		# track if discounts included in field filters
 		self.filter_with_discount = bool(fields.get("discount"))
-		result, discount_list, website_item_groups, cart_items, count = [], [], [], [], 0
+		result, discount_list, website_item_groups, cart_items, cart_qty_map, count = [], [], [], set(), {}, 0
 
 		if fields:
 			self.build_fields_filters(fields)
@@ -77,9 +77,9 @@ class ProductQuery:
 		result = sorted(result, key=lambda x: x.get("ranking"), reverse=True)
 
 		if self.settings.enabled:
-			cart_items = self.get_cart_items()
+			cart_items, cart_qty_map = self.get_cart_items()
 
-		result, discount_list = self.add_display_details(result, discount_list, cart_items)
+		result, discount_list = self.add_display_details(result, discount_list, cart_items, cart_qty_map)
 
 		discounts = []
 		if discount_list:
@@ -220,7 +220,7 @@ class ProductQuery:
 		for field in search_fields:
 			self.or_filters.append([field, "like", search])
 
-	def add_display_details(self, result, discount_list, cart_items):
+	def add_display_details(self, result, discount_list, cart_items, cart_qty_map):
 		"""Add price and availability details in result."""
 		for item in result:
 			product_info = get_product_info_for_website(item.item_code, skip_quotation_creation=True).get(
@@ -235,6 +235,7 @@ class ProductQuery:
 				self.get_stock_availability(item)
 
 			item.in_cart = item.item_code in cart_items
+			item.cart_qty = cart_qty_map.get(item.item_code, 0)
 
 			item.wished = False
 			if frappe.db.exists(
@@ -298,13 +299,38 @@ class ProductQuery:
 				limit_page_length=1,
 			)
 			if quotation:
-				items = frappe.get_all(
-					"Quotation Item", fields=["item_code"], filters={"parent": quotation[0].get("name")}
+				quotation_items = frappe.get_all(
+					"Quotation Item",
+					fields=["item_code", "qty"],
+					filters={"parent": quotation[0].get("name")},
 				)
-				items = [row.item_code for row in items]
-				return items
+				item_codes = [row.item_code for row in quotation_items]
+				qty_by_item = {}
+				for row in quotation_items:
+					qty_by_item[row.item_code] = qty_by_item.get(row.item_code, 0) + int(row.qty or 0)
 
-		return []
+				if not item_codes:
+					return set(), {}
+
+				variant_rows = frappe.get_all(
+					"Item",
+					filters={"item_code": ["in", item_codes], "variant_of": ["is", "set"]},
+					fields=["item_code", "variant_of"],
+				)
+
+				variant_templates = []
+				for row in variant_rows:
+					if not row.variant_of:
+						continue
+					variant_templates.append(row.variant_of)
+					qty_by_item[row.variant_of] = qty_by_item.get(row.variant_of, 0) + qty_by_item.get(
+						row.item_code, 0
+					)
+
+				all_item_codes = set(item_codes + variant_templates)
+				return all_item_codes, qty_by_item
+
+		return set(), {}
 
 	def filter_results_by_discount(self, fields, result):
 		if fields and fields.get("discount"):
