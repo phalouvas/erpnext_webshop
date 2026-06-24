@@ -1056,7 +1056,7 @@ body.product-page {
 }
 
 .btn-explore-variants {
-	visibility: hidden;
+	visibility: visible;
 	box-shadow: none;
 	margin: var(--margin-sm) 0;
 	width: 90px;
@@ -1075,7 +1075,7 @@ body.product-page {
 }
 
 .btn-add-to-cart-list{
-	visibility: hidden;
+	visibility: visible;
 	box-shadow: none;
 	margin: var(--margin-sm) 0;
 	// margin-top: auto !important;
@@ -1087,10 +1087,6 @@ body.product-page {
 
 	&:hover {
 		color: white;
-	}
-
-	@media (max-width: 992px) {
-		visibility: visible !important;
 	}
 }
 

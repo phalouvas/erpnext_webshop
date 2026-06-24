@@ -58,6 +58,7 @@ class WebshopItemGroup(ItemGroup, WebsiteGenerator):
 
 		context.field_filters = filter_engine.get_field_filters()
 		context.attribute_filters = filter_engine.get_attribute_filters()
+		context.has_filters = bool(context.field_filters or context.attribute_filters)
 
 		context.update({"parents": get_parent_item_groups(self.parent_item_group), "title": self.name})
 

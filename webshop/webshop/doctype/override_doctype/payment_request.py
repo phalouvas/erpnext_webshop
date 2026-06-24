@@ -37,7 +37,21 @@ class PaymentRequest(OriginalPaymentRequest):
                 }
             ).get(success_url, "/me")
 
-        self.set_as_paid()
+        # Payment finalization requires backend permissions that website/portal
+        # users do not have (e.g. read access on Sales Order/Purchase Invoice).
+        # Temporarily set session user to Administrator — this only changes the
+        # user identity for permission checks, keeping session data intact so
+        # the user stays logged in after the payment completes.
+        original_user = frappe.session.user
+        frappe.session.user = "Administrator"
+        frappe.local.user_perms = None
+        frappe.local.role_permissions = {}
+        try:
+            self.set_as_paid()
+        finally:
+            frappe.session.user = original_user
+            frappe.local.user_perms = None
+            frappe.local.role_permissions = {}
 
         return redirect_to
 
