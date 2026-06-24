@@ -39,14 +39,19 @@ class PaymentRequest(OriginalPaymentRequest):
 
         # Payment finalization requires backend permissions that website/portal
         # users do not have (e.g. read access on Sales Order/Purchase Invoice).
-        # Switch to Administrator for the duration of set_as_paid so that the
-        # Payment Entry can be created and the reference document read.
+        # Temporarily set session user to Administrator — this only changes the
+        # user identity for permission checks, keeping session data intact so
+        # the user stays logged in after the payment completes.
         original_user = frappe.session.user
-        frappe.set_user("Administrator")
+        frappe.session.user = "Administrator"
+        frappe.local.user_perms = None
+        frappe.local.role_permissions = {}
         try:
             self.set_as_paid()
         finally:
-            frappe.set_user(original_user)
+            frappe.session.user = original_user
+            frappe.local.user_perms = None
+            frappe.local.role_permissions = {}
 
         return redirect_to
 
