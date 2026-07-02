@@ -21,20 +21,14 @@
 		{% endif %}
 	</div>
 
-	<div itemprop="aggregateRating" itemscope itemtype="https://schema.org/AggregateRating">
-	</div>
-
-	<div itemprop="review" itemscope itemtype="https://schema.org/Review">
-	</div>
-
 	<p class="product-code">
 		<span class="product-item-group">
 			{{ _(doc.item_group) }}
 		</span>
-		<span class="product-item-code" itemprop="name">
+		<span class="product-item-code">
 			{{ _("Item Code") }}:
 		</span>
-		<span itemprop="name">{{ _(doc.item_code) }}</span>
+		<span>{{ _(doc.item_code) }}</span>
 	</p>
 	{% if has_variants %}
 		<!-- configure template -->
