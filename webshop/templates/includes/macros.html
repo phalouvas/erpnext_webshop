@@ -274,19 +274,26 @@
 <!-- User Reviews -->
 <div class="user-reviews">
 	{% for review in reviews %}
-		<div class="mb-3 review">
+		<div class="mb-3 review" itemprop="review" itemscope itemtype="https://schema.org/Review">
+			<div itemprop="reviewRating" itemscope itemtype="https://schema.org/Rating">
+				<meta itemprop="ratingValue" content="{{ review.rating }}">
+				<meta itemprop="bestRating" content="5">
+				<meta itemprop="worstRating" content="1">
+			</div>
 			{{ ratings_with_title(review.rating, _(review.review_title), "sm", "user-review-title") }}
 			{% if review.comment %}
-				<div class="product-description mb-4">
+				<div class="product-description mb-4" itemprop="reviewBody">
 					<p>
 						{{ _(review.comment) }}
 					</p>
 				</div>
 			{% endif %}
 			<div class="review-signature mb-2">
-				<span class="reviewer">{{ _(review.customer) }}</span>
+				<span class="reviewer" itemprop="author" itemscope itemtype="https://schema.org/Person">
+					<span itemprop="name">{{ _(review.customer) }}</span>
+				</span>
 				<span class="indicator grey" style="--text-on-gray: var(--gray-300);"></span>
-				<span class="reviewer">{{ _(review.published_on) }}</span>
+				<span class="reviewer"><meta itemprop="datePublished" content="{{ review.published_on }}">{{ _(review.published_on) }}</span>
 			</div>
 		</div>
 	{% endfor %}

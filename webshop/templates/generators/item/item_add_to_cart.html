@@ -33,7 +33,11 @@
 				</small>
 			</div>
 		{% else %}
-			{{ _("UOM") }} : {{ product_info.uom }}
+			<div itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+				<meta itemprop="priceCurrency" content="{{ cart_settings.currency or 'USD' }}">
+				<meta itemprop="availability" content="{% if product_info.get('on_backorder') %}https://schema.org/PreOrder{% elif product_info.in_stock == 0 %}https://schema.org/OutOfStock{% else %}https://schema.org/InStock{% endif %}">
+				{{ _("UOM") }} : {{ product_info.uom }}
+			</div>
 		{% endif %}
 
 		{% if cart_settings.show_stock_availability %}
