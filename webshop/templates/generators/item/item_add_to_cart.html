@@ -9,17 +9,17 @@
 		{% if cart_settings.show_price and product_info.price %}
 			{% set price_info = product_info.price %}
 
-			<div class="product-price" itemprop="offers" itemscope itemtype="https://schema.org/AggregateOffer">
+			<div class="product-price" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
 				<!-- Final Price -->
 				{% if price_info.formatted_mrp %}
-					<span itemprop="lowPrice" content="{{ price_info.formatted_price_sales_uom }}">{{ price_info.formatted_price_sales_uom }}</span>
+					<span itemprop="price" content="{{ price_info.formatted_price_sales_uom }}">{{ price_info.formatted_price_sales_uom }}</span>
 				{% else %}
-					<span itemprop="highPrice" content="{{ price_info.formatted_price_sales_uom }}">{{ price_info.formatted_price_sales_uom }}</span>
+					<span itemprop="price" content="{{ price_info.formatted_price_sales_uom }}">{{ price_info.formatted_price_sales_uom }}</span>
 				{% endif %}
 
 				<!-- Striked Price and Discount  -->
 				{% if price_info.formatted_mrp %}
-					<small itemprop="highPrice" class="formatted-price">
+					<small class="formatted-price">
 						<s>MRP {{ price_info.formatted_mrp }}</s>
 					</small>
 					<small class="ml-1 formatted-price in-green">
@@ -31,6 +31,8 @@
 				<small class="formatted-price ml-2">
 					({{ price_info.formatted_price }} / {{ product_info.uom }})
 				</small>
+				<meta itemprop="priceCurrency" content="{{ cart_settings.currency or 'USD' }}">
+				<link itemprop="availability" href="https://schema.org/InStock" />
 			</div>
 		{% else %}
 			<div itemprop="offers" itemscope itemtype="https://schema.org/Offer">
