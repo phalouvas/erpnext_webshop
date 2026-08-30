@@ -8,6 +8,25 @@ class DataValidationError(frappe.ValidationError):
 	pass
 
 class WebshopItem(Item):
+	def has_permission(self, permtype="read", *, debug=False, user=None) -> bool:
+		"""
+		Allow website users (and Guest) to read Item documents.
+
+		Items are public catalog data on the storefront. ERPNext's whitelisted
+		get_item_details (used by the shopping cart for pricing) calls
+		item.check_permission() since v16.30, which fails for website users who
+		have no role-based read access to the Item doctype. This only relaxes the
+		document-level read check for public website users; module-level (role
+		permission) checks and Desk / System User access are unaffected.
+		"""
+		user = user or frappe.session.user
+		if permtype == "read" and (
+			user == "Guest" or frappe.get_cached_value("User", user, "user_type") == "Website User"
+		):
+			return True
+
+		return super().has_permission(permtype, debug=debug, user=user)
+
 	def on_update(self):
 		super(WebshopItem, self).on_update()
 		invalidate_cache_for_item(self)
