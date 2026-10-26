@@ -226,6 +226,12 @@ def make_payment_request(**args):
 		for dimension in get_accounting_dimensions():
 			pr.update({dimension: ref_doc.get(dimension)})
 
+		# Newer ERPNext versions validate `read` permission on the reference document
+		# inside PaymentRequest.validate(). Website/portal users (and guests) don't have
+		# backend role permissions on Sales Order/etc, but their access was already
+		# verified above via has_website_permission / has_permission.
+		pr.flags.ignore_reference_permission = True
+
 		if frappe.db.get_single_value("Accounts Settings", "create_pr_in_draft_status", cache=True):
 			pr.insert(ignore_permissions=True)
 		if args.submit_doc:
